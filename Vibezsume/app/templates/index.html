@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibezsume - AI-Powered Resume Analysis</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- SEO and Meta Tags -->
+    <meta name="description" content="AI-powered resume analysis with local LLM. Get instant feedback, build ATS-friendly PDFs, and discover skill gaps.">
+    <meta name="keywords" content="resume analysis, AI resume, ATS checker, resume builder, job skills">
+    <meta name="author" content="Vibezsume">
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="Vibezsume - AI-Powered Resume Analysis">
+    <meta property="og:description" content="Upload your resume, get AI feedback, and build ATS-friendly PDFs">
+    <meta property="og:type" content="website">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>V</text></svg>">
+</head>
+<body>    <!-- Ultra-Modern Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2>Vibezsume</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#analyzer" class="nav-link">Analyze</a>
+                <a href="#builder" class="nav-link">Build</a>
+                <a href="#validator" class="nav-link">Validate</a>
+            </div>
+        </div>
+    </nav>    <!-- Ultra-Fancy Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>AI-Powered Resume Analysis</h1>
+                <p>Transform your career with intelligent resume analysis. Upload, analyze, optimize, and build ATS-friendly PDFs with the power of local AI that keeps your data private.</p>
+                <div class="hero-buttons">
+                    <button onclick="scrollToSection('analyzer')" class="btn btn-primary btn-large">
+                        <i class="fas fa-rocket"></i> Start Analysis
+                    </button>
+                    <button onclick="scrollToSection('builder')" class="btn btn-secondary btn-large">
+                        <i class="fas fa-magic"></i> Build Resume
+                    </button>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="feature-cards">
+                    <div class="feature-card animate-on-scroll">
+                        <i class="fas fa-brain"></i>
+                        <h3>AI Analysis</h3>
+                        <p>Local LLM powered insights that understand your unique career story</p>
+                    </div>
+                    <div class="feature-card animate-on-scroll">
+                        <i class="fas fa-shield-alt"></i>
+                        <h3>Privacy First</h3>
+                        <p>Your data never leaves your device. Complete privacy guaranteed</p>
+                    </div>
+                    <div class="feature-card animate-on-scroll">
+                        <i class="fas fa-chart-line"></i>
+                        <h3>Smart Insights</h3>
+                        <p>Discover skill gaps and optimization opportunities instantly</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>    <!-- Enhanced Resume Analyzer Section -->
+    <section id="analyzer" class="section">
+        <div class="container">
+            <h2 class="section-title animate-on-scroll">Resume Analyzer</h2>
+            <p class="section-subtitle animate-on-scroll">Upload your resume and get instant AI-powered feedback with personalized recommendations</p>
+            
+            <div class="analyzer-container">
+                <div class="upload-area animate-on-scroll">
+                    <div class="upload-box" id="uploadBox">
+                        <div class="upload-content">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                            <h3>Upload Your Resume</h3>
+                            <p>Drag & drop your resume or click to browse</p>
+                            <p class="file-types">Supports PDF, DOCX files (max 10MB)</p>
+                            <input type="file" id="resumeFile" accept=".pdf,.docx,.doc" style="display: none;">
+                        </div>
+                    </div>
+                    
+                    <div class="job-description-input">
+                        <h4>Job Description (Optional)</h4>
+                        <textarea id="jobDescription" placeholder="Paste the job description here for targeted analysis that matches your resume to specific requirements..."></textarea>
+                        <input type="url" id="jobUrl" placeholder="Job posting URL (optional)">
+                    </div>
+                    
+                    <button id="analyzeBtn" class="btn btn-primary btn-large" disabled>
+                        <i class="fas fa-magic"></i> Analyze with AI
+                    </button>
+                </div>
+                
+                <div class="analysis-results card" id="analysisResults" style="display: none;">
+                    <div class="results-tabs">
+                        <button class="tab-btn active" data-tab="overview">Overview</button>
+                        <button class="tab-btn" data-tab="skills">Skills Gap</button>
+                        <button class="tab-btn" data-tab="vibe">Vibe Check</button>
+                    </div>
+                    
+                    <div class="tab-content">
+                        <div id="overview" class="tab-pane active">
+                            <div class="score-card">
+                                <div class="score-circle">
+                                    <span class="score-value">--</span>
+                                    <span class="score-label">AI Score</span>
+                                </div>
+                                <div class="score-details">
+                                    <div class="score-breakdown">
+                                        <h4>Analysis Results</h4>
+                                        <div id="analysisDetails"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="skills" class="tab-pane">
+                            <div class="skills-analysis">
+                                <h4>Skill Gap Analysis</h4>
+                                <div id="skillsContent"></div>
+                            </div>
+                        </div>
+                        
+                        <div id="vibe" class="tab-pane">
+                            <div class="vibe-check">
+                                <h4>Vibe Check Feedback</h4>
+                                <div id="vibeContent"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Resume Builder Section -->
+    <section id="builder" class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">Resume Builder</h2>
+            <p class="section-subtitle">Create ATS-friendly PDF resumes</p>
+            
+            <div class="builder-container">
+                <div class="builder-form">
+                    <form id="resumeBuilderForm">
+                        <!-- Contact Information -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-user"></i> Contact Information</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fullName">Full Name *</label>
+                                    <input type="text" id="fullName" name="full_name" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">Email *</label>
+                                    <input type="email" id="email" name="email" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="phone">Phone</label>
+                                    <input type="tel" id="phone" name="phone">
+                                </div>
+                                <div class="form-group">
+                                    <label for="location">Location</label>
+                                    <input type="text" id="location" name="location">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="linkedin">LinkedIn URL</label>
+                                    <input type="url" id="linkedin" name="linkedin">
+                                </div>
+                                <div class="form-group">
+                                    <label for="github">GitHub URL</label>
+                                    <input type="url" id="github" name="github">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Professional Summary -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-align-left"></i> Professional Summary</h3>
+                            <div class="form-group">
+                                <label for="summary">Summary</label>
+                                <textarea id="summary" name="summary" rows="4" placeholder="Write a compelling professional summary..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Experience -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-briefcase"></i> Experience</h3>
+                            <div id="experienceContainer">
+                                <!-- Experience items will be added dynamically -->
+                            </div>
+                            <button type="button" id="addExperience" class="btn btn-outline">
+                                <i class="fas fa-plus"></i> Add Experience
+                            </button>
+                        </div>
+
+                        <!-- Education -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-graduation-cap"></i> Education</h3>
+                            <div id="educationContainer">
+                                <!-- Education items will be added dynamically -->
+                            </div>
+                            <button type="button" id="addEducation" class="btn btn-outline">
+                                <i class="fas fa-plus"></i> Add Education
+                            </button>
+                        </div>
+
+                        <!-- Skills -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-cogs"></i> Skills</h3>
+                            <div class="form-group">
+                                <label for="skillInput">Add Skills</label>
+                                <div class="skill-input-container">
+                                    <input type="text" id="skillInput" placeholder="Type a skill and press Enter">
+                                    <button type="button" id="addSkill" class="btn btn-sm">Add</button>
+                                </div>
+                                <div id="skillsContainer" class="skills-container">
+                                    <!-- Skills will be added dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Template Options -->
+                        <div class="form-section">
+                            <h3><i class="fas fa-palette"></i> Template Options</h3>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="templateStyle">Template Style</label>
+                                    <select id="templateStyle" name="template_style">
+                                        <option value="modern">Modern</option>
+                                        <option value="classic">Classic</option>
+                                        <option value="creative">Creative</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="colorScheme">Color Scheme</label>
+                                    <select id="colorScheme" name="color_scheme">
+                                        <option value="blue">Blue</option>
+                                        <option value="green">Green</option>
+                                        <option value="purple">Purple</option>
+                                        <option value="black">Black</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-large">
+                            <i class="fas fa-file-pdf"></i> Generate PDF Resume
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="builder-preview">
+                    <div class="preview-container">
+                        <h4>Resume Preview</h4>
+                        <div id="resumePreview" class="resume-preview">
+                            <p>Fill out the form to see a preview of your resume.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ATS Validator Section -->
+    <section id="validator" class="section">
+        <div class="container">
+            <h2 class="section-title">ATS Validator</h2>
+            <p class="section-subtitle">Check your resume's ATS compatibility</p>
+            
+            <div class="validator-container">
+                <div class="validator-input">
+                    <div class="upload-methods">
+                        <div class="method-tabs">
+                            <button class="method-tab active" data-method="file">Upload File</button>
+                            <button class="method-tab" data-method="text">Paste Text</button>
+                        </div>
+                        
+                        <div id="fileMethod" class="method-content active">
+                            <div class="upload-box" id="validatorUploadBox">
+                                <div class="upload-content">
+                                    <i class="fas fa-file-check"></i>
+                                    <h3>Upload Resume for ATS Validation</h3>
+                                    <p>We'll check formatting, spacing, and ATS compatibility</p>
+                                    <input type="file" id="validatorFile" accept=".pdf,.docx,.doc" style="display: none;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="textMethod" class="method-content">
+                            <div class="form-group">
+                                <label for="resumeTextArea">Paste Resume Text</label>
+                                <textarea id="resumeTextArea" rows="10" placeholder="Paste your resume text here..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="validator-options">
+                        <div class="form-group">
+                            <label for="targetKeywords">Target Keywords (Optional)</label>
+                            <input type="text" id="targetKeywords" placeholder="Enter comma-separated keywords">
+                        </div>
+                    </div>
+                    
+                    <button id="validateBtn" class="btn btn-primary">
+                        <i class="fas fa-check-circle"></i> Validate ATS Compatibility
+                    </button>
+                </div>
+                
+                <div class="validation-results" id="validationResults" style="display: none;">
+                    <div class="validation-score">
+                        <div class="score-gauge">
+                            <div class="gauge-circle">
+                                <span class="gauge-value">--</span>
+                                <span class="gauge-label">ATS Score</span>
+                            </div>
+                        </div>
+                        <div class="score-breakdown">
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Formatting</span>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" data-category="formatting"></div>
+                                </div>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Spacing</span>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" data-category="spacing"></div>
+                                </div>
+                            </div>
+                            <div class="breakdown-item">
+                                <span class="breakdown-label">Structure</span>
+                                <div class="breakdown-bar">
+                                    <div class="breakdown-fill" data-category="structure"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="validation-details">
+                        <div class="issues-section">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Issues Found</h4>
+                            <div id="issuesList"></div>
+                        </div>
+                        
+                        <div class="recommendations-section">
+                            <h4><i class="fas fa-lightbulb"></i> Recommendations</h4>
+                            <div id="recommendationsList"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>    <!-- Ultra-Fancy Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="ai-brain">AI</div>
+            </div>
+            <p id="loadingText">Processing your resume with AI analysis...</p>
+            <div class="loading-progress">
+                <div class="progress-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Vibezsume</h3>
+                    <p>AI-powered resume analysis and building platform</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Features</h4>
+                    <ul>
+                        <li>Resume Analysis</li>
+                        <li>PDF Builder</li>
+                        <li>ATS Validation</li>
+                        <li>Skill Gap Analysis</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Technology</h4>
+                    <ul>
+                        <li>Local LLM (Ollama)</li>
+                        <li>FastAPI Backend</li>
+                        <li>ATS-Friendly PDFs</li>
+                        <li>Privacy Focused</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Vibezsume. Your resume data stays private and secure.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
