@@ -63,16 +63,21 @@ async def startup_event():
     """Initialize services on startup"""
     try:
         await llm_service.initialize()
-        print("✅ LLM Service initialized successfully")
+        if llm_service.is_available:
+            print("✅ LLM Service initialized successfully")
+        else:
+            print("ℹ️ Running in basic mode without AI features")
     except Exception as e:
-        print(f"⚠️ Warning: Could not initialize LLM service: {e}")
-        print("The application will run with limited functionality.")
+        print(f"ℹ️ LLM service unavailable: {e}")
+        print("The application will run with basic functionality.")
 
 if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 8000))
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
+        port=port,
+        reload=False,
         log_level="info"
     )

@@ -77,7 +77,7 @@ class LLMService:
 
     def _fallback_response(self) -> str:
         """Fallback response when LLM is not available"""
-        return "AI analysis unavailable. Please check if Ollama is running and the model is installed."
+        return "Basic analysis completed. For advanced AI insights, run locally with Ollama."
 
     async def analyze_resume(self, resume_data: ResumeData, job_description: Optional[JobDescription] = None) -> AnalysisResult:
         """Analyze resume content and provide feedback"""
