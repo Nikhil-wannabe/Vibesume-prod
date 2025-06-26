@@ -21,16 +21,7 @@ logger = logging.getLogger(__name__)
 resume_parser = ResumeParser()
 llm_service = LLMService()
 
-# Initialize LLM service on module load
-import asyncio
-async def init_llm():
-    await llm_service.initialize()
-
-# Run initialization
-try:
-    asyncio.create_task(init_llm())
-except:
-    pass  # Will be initialized when first used
+# LLM service will be initialized in main.py startup event
 
 # Ensure upload directory exists
 UPLOAD_DIR = Path("uploads")

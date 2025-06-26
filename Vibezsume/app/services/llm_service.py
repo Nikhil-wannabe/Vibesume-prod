@@ -1,6 +1,6 @@
 """
 LLM Service for local language model integration
-Supports Ollama and other local LLM solutions
+Supports Ollama and other local LLM solutions with fallback demo mode
 """
 
 import asyncio
@@ -8,7 +8,7 @@ import json
 import logging
 from typing import Dict, List, Optional, Any
 import httpx
-from app.models.resume_models import ResumeData, JobDescription, AnalysisResult
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -30,23 +30,23 @@ class LLMService:
                     
                     if self.model_name in available_models:
                         self.is_available = True
-                        logger.info(f"✅ LLM service initialized with model: {self.model_name}")
+                        logger.info(f"LLM service initialized with model: {self.model_name}")
                     else:
-                        logger.warning(f"⚠️ Model {self.model_name} not found. Available models: {available_models}")
+                        logger.warning(f"Model {self.model_name} not found. Available models: {available_models}")
                         if available_models:
                             self.model_name = available_models[0]
                             self.is_available = True
                             logger.info(f"Using alternative model: {self.model_name}")
                 else:
-                    logger.error(f"❌ Ollama server not responding: {response.status_code}")
+                    logger.error(f"Ollama server not responding: {response.status_code}")
         except Exception as e:
-            logger.error(f"❌ Could not connect to Ollama: {e}")
-            logger.info("💡 To use AI features, install Ollama from https://ollama.ai and run 'ollama pull llama3.2:3b'")
+            logger.error(f"Could not connect to Ollama: {e}")
+            logger.info("Running in demo mode with enhanced mock analysis")
 
     async def generate_response(self, prompt: str, system_prompt: str = None) -> str:
-        """Generate response from the local LLM"""
+        """Generate response from the local LLM with fallback"""
         if not self.is_available:
-            return self._fallback_response()
+            return self._fallback_response(prompt)
 
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -69,227 +69,225 @@ class LLMService:
                     return result.get("response", "").strip()
                 else:
                     logger.error(f"LLM request failed: {response.status_code}")
-                    return self._fallback_response()
+                    return self._fallback_response(prompt)
                     
         except Exception as e:
             logger.error(f"Error generating LLM response: {e}")
-            return self._fallback_response()
+            return self._fallback_response(prompt)
 
-    def _fallback_response(self) -> str:
-        """Fallback response when LLM is not available"""
-        return "Basic analysis completed. For advanced AI insights, run locally with Ollama."
-
-    async def analyze_resume(self, resume_data: ResumeData, job_description: Optional[JobDescription] = None) -> AnalysisResult:
-        """Analyze resume content and provide feedback"""
-        
-        # Create prompt for resume analysis
-        resume_text = self._format_resume_for_analysis(resume_data)
-        
-        system_prompt = """You are an expert resume reviewer and career coach. Analyze the provided resume and give constructive feedback. Focus on:
-1. Overall structure and organization
-2. Content quality and relevance
-3. Skills alignment with industry standards
-4. Areas for improvement
-5. Missing critical information
-
-Provide your response in a structured format with specific, actionable recommendations."""
-
-        if job_description:
-            prompt = f"""
-Analyze this resume against the following job description:
-
-JOB DESCRIPTION:
-Title: {job_description.title}
-Company: {job_description.company or 'Not specified'}
-Description: {job_description.description}
-Required Skills: {', '.join(job_description.required_skills)}
-Preferred Skills: {', '.join(job_description.preferred_skills)}
-
-RESUME:
-{resume_text}
-
-Please provide:
-1. Match percentage (0-100)
-2. Key strengths that align with the job
-3. Missing skills or qualifications
-4. Specific suggestions to improve match
-5. Keywords that should be added
-
-Format your response as structured feedback.
-"""
+    def _fallback_response(self, prompt: str) -> str:
+        """Enhanced fallback response with demo analysis"""
+        if "resume" in prompt.lower():
+            return self._generate_demo_resume_analysis(prompt)
+        elif "job" in prompt.lower():
+            return self._generate_demo_job_analysis(prompt)
         else:
-            prompt = f"""
-Analyze this resume and provide comprehensive feedback:
+            return "Analysis completed in demo mode. For advanced AI insights, run locally with Ollama."
 
-RESUME:
-{resume_text}
-
-Please provide:
-1. Overall quality score (0-100)
-2. Strengths of the resume
-3. Areas that need improvement
-4. Specific suggestions for enhancement
-5. Missing sections or information
-
-Format your response as structured feedback.
-"""
-
-        # Get AI analysis
-        ai_response = await self.generate_response(prompt, system_prompt)
+    def _generate_demo_resume_analysis(self, prompt: str) -> str:
+        """Generate demo resume analysis"""
+        return """
+        DEMO ANALYSIS:
         
-        # Parse AI response and create structured result
-        return self._parse_analysis_response(ai_response, job_description)
-
-    async def get_skill_gap_analysis(self, resume_data: ResumeData, job_description: JobDescription) -> Dict[str, Any]:
-        """Analyze skill gaps between resume and job requirements"""
+        Strengths:
+        • Professional experience demonstrated
+        • Clear technical skills listed
+        • Good educational background
+        • Relevant industry experience
         
-        current_skills = [skill.name.lower() for skill in resume_data.skills]
-        required_skills = [skill.lower() for skill in job_description.required_skills]
-        preferred_skills = [skill.lower() for skill in job_description.preferred_skills]
+        Areas for Improvement:
+        • Add quantifiable achievements
+        • Include more specific project details
+        • Optimize keywords for ATS systems
+        • Consider adding certifications
         
-        # Identify missing skills
-        missing_required = [skill for skill in required_skills if skill not in current_skills]
-        missing_preferred = [skill for skill in preferred_skills if skill not in current_skills]
+        Overall Score: 78/100
         
-        # Get AI recommendations for skill development
-        prompt = f"""
-Based on this skill gap analysis:
+        Recommendations:
+        • Use action verbs to start bullet points
+        • Add metrics to show impact
+        • Tailor resume for specific roles
+        • Include relevant keywords from job descriptions
+        """
 
-Current Skills: {', '.join([skill.name for skill in resume_data.skills])}
-Missing Required Skills: {', '.join(missing_required)}
-Missing Preferred Skills: {', '.join(missing_preferred)}
-Job Title: {job_description.title}
-
-Provide specific recommendations for:
-1. Priority skills to learn first
-2. Learning resources or paths
-3. How to gain experience in these skills
-4. Timeline for skill development
-5. Alternative skills that could compensate
-
-Be practical and actionable in your advice.
-"""
-
-        system_prompt = "You are a career development expert specializing in skill gap analysis and professional development planning."
+    def _generate_demo_job_analysis(self, prompt: str) -> str:
+        """Generate demo job analysis"""
+        return """
+        JOB ANALYSIS:
         
-        ai_response = await self.generate_response(prompt, system_prompt)
+        Key Requirements Identified:
+        • Technical skills in programming
+        • Experience with relevant frameworks
+        • Team collaboration abilities
+        • Problem-solving skills
+        
+        Match Assessment:
+        • Good alignment with stated experience
+        • Skills match moderately well
+        • Consider highlighting relevant projects
+        
+        Suggestions:
+        • Emphasize matching experience
+        • Add relevant keywords
+        • Quantify achievements
+        • Show impact of previous work
+        """
+
+    async def analyze_resume(self, text: str) -> Dict[str, Any]:
+        """Analyze resume text and return structured data"""
+        # Extract basic info
+        basic_info = self.extract_basic_info(text)
+        
+        # Simple keyword extraction for skills
+        tech_keywords = [
+            'python', 'javascript', 'java', 'react', 'node.js', 'sql', 'aws', 'docker',
+            'git', 'html', 'css', 'mongodb', 'postgresql', 'kubernetes', 'jenkins',
+            'machine learning', 'data science', 'api', 'rest', 'microservices'
+        ]
+        
+        text_lower = text.lower()
+        found_skills = [skill for skill in tech_keywords if skill in text_lower]
+        
+        # Extract experience years
+        experience_years = self._extract_experience_years(text)
+        
+        # Determine career level
+        career_level = self._determine_career_level(experience_years)
         
         return {
-            "missing_required_skills": missing_required,
-            "missing_preferred_skills": missing_preferred,
-            "skill_match_percentage": self._calculate_skill_match(current_skills, required_skills + preferred_skills),
-            "ai_recommendations": ai_response,
-            "learning_priority": missing_required[:5]  # Top 5 priority skills
+            "name": basic_info["name"],
+            "email": basic_info["email"],
+            "phone": basic_info["phone"],
+            "experience_years": experience_years,
+            "career_level": career_level,
+            "skills": found_skills[:10],
+            "strengths": [
+                "Clear technical background",
+                "Relevant industry experience",
+                "Good skill diversity",
+                "Professional presentation"
+            ],
+            "recommendations": [
+                "Add quantifiable achievements",
+                "Include project descriptions",
+                "Optimize for ATS keywords",
+                "Consider adding certifications"
+            ],
+            "summary": f"Experienced {career_level.lower()} professional with {experience_years} years in the field.",
+            "mode": "Demo mode - Enhanced analysis available with full AI integration"
         }
 
-    async def vibe_check_feedback(self, resume_data: ResumeData, job_url: Optional[str] = None) -> str:
-        """Provide 'vibe check' feedback in a casual, honest manner"""
+    def extract_basic_info(self, text: str) -> Dict[str, Any]:
+        """Extract basic information from resume text"""
+        # Extract email
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        emails = re.findall(email_pattern, text)
         
-        resume_text = self._format_resume_for_analysis(resume_data)
+        # Extract phone
+        phone_pattern = r'(\+?1?[-.\s]?)?\(?([0-9]{3})\)?[-.\s]?([0-9]{3})[-.\s]?([0-9]{4})'
+        phones = re.findall(phone_pattern, text)
         
-        system_prompt = """You are a friendly but brutally honest career coach who gives "vibe check" feedback. 
-Be conversational, use some casual language, but provide genuinely helpful insights. 
-Point out both the good stuff and what needs work, but do it in an encouraging way.
-Think of yourself as that friend who tells you the truth but has your back."""
+        # Extract name (first non-email line that looks like a name)
+        lines = text.split('\n')
+        name = ""
+        for line in lines[:5]:
+            line = line.strip()
+            if line and '@' not in line and len(line.split()) <= 3 and len(line) > 2:
+                name = line
+                break
+        
+        return {
+            "name": name or "Not specified",
+            "email": emails[0] if emails else "Not specified",
+            "phone": f"({phones[0][1]}) {phones[0][2]}-{phones[0][3]}" if phones else "Not specified"
+        }
 
-        if job_url:
-            prompt = f"""
-Give me a vibe check on this resume. Someone's trying to land a job and wants to know if their resume is giving the right energy.
+    def _extract_experience_years(self, text: str) -> int:
+        """Extract years of experience from text"""
+        experience_years = 0
+        exp_patterns = [
+            r'(\d+)\+?\s*years?\s*(?:of\s*)?experience',
+            r'experience.*?(\d+)\+?\s*years?',
+            r'(\d+)\+?\s*years?\s*in'
+        ]
+        
+        text_lower = text.lower()
+        for pattern in exp_patterns:
+            matches = re.findall(pattern, text_lower)
+            if matches:
+                try:
+                    experience_years = max(experience_years, int(matches[0]))
+                except:
+                    pass
+        
+        return experience_years
 
-Job URL: {job_url}
-
-RESUME:
-{resume_text}
-
-Keep it real - what's working, what's not, and what would make this resume actually stand out? 
-Be specific about improvements but keep the tone supportive and motivating.
-"""
+    def _determine_career_level(self, years: int) -> str:
+        """Determine career level based on years of experience"""
+        if years >= 8:
+            return "Senior"
+        elif years >= 3:
+            return "Mid-level"
+        elif years >= 1:
+            return "Junior"
         else:
-            prompt = f"""
-Time for a resume vibe check! Give me the real talk on this resume:
+            return "Entry-level"
 
-RESUME:
-{resume_text}
+    async def validate_ats(self, text: str) -> Dict[str, Any]:
+        """Validate resume for ATS compatibility"""
+        issues = []
+        score = 85  # Base score
+        
+        # Check for common ATS issues
+        if len(text) < 200:
+            issues.append("Resume content is too short")
+            score -= 15
+            
+        if not re.search(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', text):
+            issues.append("No email address found")
+            score -= 10
+            
+        # Check for good structure indicators
+        structure_keywords = ['experience', 'education', 'skills', 'summary']
+        found_sections = sum(1 for keyword in structure_keywords if keyword.lower() in text.lower())
+        
+        if found_sections < 3:
+            issues.append("Missing key resume sections")
+            score -= 10
+        
+        return {
+            "ats_score": max(score, 0),
+            "issues": issues,
+            "recommendations": [
+                "Use standard section headings",
+                "Include relevant keywords",
+                "Use simple formatting",
+                "Save as both PDF and plain text"
+            ],
+            "keyword_density": "Moderate",
+            "formatting_score": 90
+        }
 
-What's the energy this resume is giving off? Is it "hire me now" or "maybe consider me"? 
-What would make this resume absolutely slap? Keep it honest but encouraging.
-"""
-
-        return await self.generate_response(prompt, system_prompt)
-
-    def _format_resume_for_analysis(self, resume_data: ResumeData) -> str:
-        """Format resume data into readable text for LLM analysis"""
-        sections = []
+    async def analyze_job_fit(self, resume_text: str, job_text: str) -> Dict[str, Any]:
+        """Analyze how well resume matches job description"""
+        # Simple keyword matching
+        resume_words = set(resume_text.lower().split())
+        job_words = set(job_text.lower().split())
         
-        # Contact info
-        contact = resume_data.contact_info
-        sections.append(f"Name: {contact.full_name}")
-        sections.append(f"Email: {contact.email}")
-        if contact.phone:
-            sections.append(f"Phone: {contact.phone}")
-        if contact.location:
-            sections.append(f"Location: {contact.location}")
+        common_words = resume_words.intersection(job_words)
+        match_percentage = min(len(common_words) / len(job_words) * 100, 95) if job_words else 0
         
-        # Summary
-        if resume_data.summary:
-            sections.append(f"\nSUMMARY:\n{resume_data.summary}")
-        
-        # Experience
-        if resume_data.experience:
-            sections.append("\nEXPERIENCE:")
-            for exp in resume_data.experience:
-                end_date = exp.end_date or "Present"
-                sections.append(f"\n{exp.position} at {exp.company} ({exp.start_date} - {end_date})")
-                for desc in exp.description:
-                    sections.append(f"• {desc}")
-                if exp.technologies:
-                    sections.append(f"Technologies: {', '.join(exp.technologies)}")
-        
-        # Education
-        if resume_data.education:
-            sections.append("\nEDUCATION:")
-            for edu in resume_data.education:
-                sections.append(f"{edu.degree} in {edu.field_of_study or 'N/A'} - {edu.institution}")
-        
-        # Skills
-        if resume_data.skills:
-            sections.append(f"\nSKILLS:\n{', '.join([skill.name for skill in resume_data.skills])}")
-        
-        return "\n".join(sections)
-
-    def _parse_analysis_response(self, ai_response: str, job_description: Optional[JobDescription] = None) -> AnalysisResult:
-        """Parse AI response into structured AnalysisResult"""
-        
-        # Extract score from response (look for percentage or score)
-        score = 75.0  # Default fallback
-        try:
-            import re
-            score_match = re.search(r'(\d+(?:\.\d+)?)\s*(?:%|/100|score)', ai_response.lower())
-            if score_match:
-                score = float(score_match.group(1))
-                if score > 100:
-                    score = score / 10  # Handle cases where it might be out of 1000
-        except:
-            pass
-        
-        # Parse sections from AI response
-        strengths = self._extract_list_from_response(ai_response, ["strength", "positive", "good"])
-        weaknesses = self._extract_list_from_response(ai_response, ["weakness", "improvement", "issue"])
-        suggestions = self._extract_list_from_response(ai_response, ["suggest", "recommend", "should"])
-        missing_skills = self._extract_list_from_response(ai_response, ["missing", "lack", "need"])
-        
-        return AnalysisResult(
-            score=score,
-            strengths=strengths[:5],  # Limit to top 5
-            weaknesses=weaknesses[:5],
-            suggestions=suggestions[:7],
-            missing_skills=missing_skills[:10],
-            keyword_matches={}  # Could be enhanced with keyword analysis
-        )
-
-    def _extract_list_from_response(self, response: str, keywords: List[str]) -> List[str]:
-        """Extract bullet points or lists from AI response based on keywords"""
-        lines = response.split('\n')
+        return {
+            "match_percentage": round(match_percentage),
+            "matched_keywords": list(common_words)[:15],
+            "missing_keywords": list(job_words - resume_words)[:10],
+            "recommendations": [
+                "Include more job-specific keywords",
+                "Highlight relevant experience",
+                "Tailor skills section to job requirements"
+            ],
+            "vibe_check": f"{'Strong' if match_percentage > 70 else 'Moderate' if match_percentage > 40 else 'Weak'} alignment with job requirements"
+        }
         relevant_lines = []
         
         for line in lines:

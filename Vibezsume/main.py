@@ -10,6 +10,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
+from datetime import datetime
 from pathlib import Path
 
 from app.routers import resume_analysis, resume_builder, ats_validator
@@ -34,11 +35,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# Mount static files if directory exists
+static_dir = Path("app/static")
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 # Templates
-templates = Jinja2Templates(directory="app/templates")
+templates_dir = Path("app/templates")
+if templates_dir.exists():
+    templates = Jinja2Templates(directory="app/templates")
+else:
+    templates = None
 
 # Include routers
 app.include_router(resume_analysis.router, prefix="/api/resume", tags=["Resume Analysis"])
@@ -51,12 +58,31 @@ llm_service = LLMService()
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     """Main page"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    if templates:
+        return templates.TemplateResponse("index.html", {"request": request})
+    else:
+        return {"message": "Vibezsume API", "docs": "/docs", "health": "/health"}
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy", "message": "Vibezsume is running"}
+    """Comprehensive health check endpoint for Render"""
+    health_status = {
+        "status": "healthy",
+        "message": "Vibezsume API is running",
+        "timestamp": datetime.now().isoformat(),
+        "services": {
+            "llm_service": llm_service.is_available if llm_service else False,
+            "static_files": static_dir.exists(),
+            "templates": templates is not None,
+        },
+        "endpoints": [
+            "/api/resume/upload",
+            "/api/ats/validate", 
+            "/api/builder/generate",
+            "/docs"
+        ]
+    }
+    return health_status
 
 @app.on_event("startup")
 async def startup_event():

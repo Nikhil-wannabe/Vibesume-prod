@@ -8,8 +8,22 @@ from typing import Dict, Any, List, Optional
 import PyPDF2
 import docx
 from pathlib import Path
-import spacy
-import nltk
+
+# Optional imports for enhanced NLP (fallback to basic parsing if not available)
+try:
+    import spacy
+    SPACY_AVAILABLE = True
+except ImportError:
+    SPACY_AVAILABLE = False
+    logger.warning("spaCy not available - using basic text processing")
+
+try:
+    import nltk
+    NLTK_AVAILABLE = True
+except ImportError:
+    NLTK_AVAILABLE = False
+    logger.warning("NLTK not available - using basic text processing")
+
 from app.models.resume_models import ResumeData, ContactInfo, Experience, Education, Skill, SkillLevel
 
 logger = logging.getLogger(__name__)
@@ -21,20 +35,25 @@ class ResumeParser:
 
     def _initialize_nlp(self):
         """Initialize NLP models for text processing"""
-        try:
-            # Try to load spaCy model
-            self.nlp = spacy.load("en_core_web_sm")
-        except OSError:
-            logger.warning("spaCy model not found. Install with: python -m spacy download en_core_web_sm")
+        if SPACY_AVAILABLE:
+            try:
+                # Try to load spaCy model
+                self.nlp = spacy.load("en_core_web_sm")
+            except OSError:
+                logger.warning("spaCy model not found. Using basic text processing.")
+                self.nlp = None
+        else:
+            logger.info("Using basic text processing (spaCy not available)")
             self.nlp = None
 
-        try:
-            # Download required NLTK data
-            nltk.download('punkt', quiet=True)
-            nltk.download('stopwords', quiet=True)
-            nltk.download('wordnet', quiet=True)
-        except:
-            logger.warning("Could not download NLTK data")
+        if NLTK_AVAILABLE:
+            try:
+                # Download required NLTK data
+                nltk.download('punkt', quiet=True)
+                nltk.download('stopwords', quiet=True)
+                nltk.download('wordnet', quiet=True)
+            except:
+                logger.warning("Could not download NLTK data")
 
     async def parse_resume(self, file_path: str) -> ResumeData:
         """Parse resume file and extract structured data"""
