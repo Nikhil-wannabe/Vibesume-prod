@@ -70,7 +70,7 @@ async def validate_resume_file(
         return {
             "file_id": file_id,
             "filename": file.filename,
-            "validation_result": validation_result.model_dump(),
+            "validation_result": validation_result.dict(),
             "message": "ATS validation completed successfully"
         }
         
@@ -101,7 +101,7 @@ async def validate_resume_text(
         
         return {
             "filename": filename,
-            "validation_result": validation_result.model_dump(),
+            "validation_result": validation_result.dict(),
             "message": "Text validation completed successfully"
         }
         

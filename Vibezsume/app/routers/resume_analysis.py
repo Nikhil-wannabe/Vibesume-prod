@@ -96,8 +96,8 @@ async def upload_resume(
         
         return {
             "file_id": file_id,
-            "resume_data": resume_data.model_dump(),
-            "analysis": analysis.model_dump(),
+            "resume_data": resume_data.dict(),
+            "analysis": analysis.dict(),
             "skill_gap": skill_gap,
             "vibe_feedback": vibe_feedback,
             "message": "Resume analyzed successfully"
@@ -244,7 +244,7 @@ async def analyze_resume_text(
             skill_gap = await llm_service.get_skill_gap_analysis(resume_data, job_desc)
         
         return {
-            "analysis": analysis.model_dump(),
+            "analysis": analysis.dict(),
             "skill_gap": skill_gap,
             "vibe_feedback": vibe_feedback,
             "message": "Text analysis completed"

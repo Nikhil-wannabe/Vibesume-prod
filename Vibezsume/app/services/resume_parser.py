@@ -9,6 +9,9 @@ import PyPDF2
 import docx
 from pathlib import Path
 
+# Setup logger first
+logger = logging.getLogger(__name__)
+
 # Optional imports for enhanced NLP (fallback to basic parsing if not available)
 try:
     import spacy
@@ -25,8 +28,6 @@ except ImportError:
     logger.warning("NLTK not available - using basic text processing")
 
 from app.models.resume_models import ResumeData, ContactInfo, Experience, Education, Skill, SkillLevel
-
-logger = logging.getLogger(__name__)
 
 class ResumeParser:
     def __init__(self):
